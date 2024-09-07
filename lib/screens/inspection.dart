@@ -8,11 +8,10 @@ class InspectionScreen extends StatefulWidget {
 }
 
 class _InspectionScreenState extends State<InspectionScreen> {
-  // Checkboxes state variables
-  bool isMotorcycleChecked = false;
-  bool isEtrikeChecked = false;
-  bool isTricycleChecked = false;
+  // Vehicle selection state variable
+  String selectedVehicleType = 'Motorcycle';
 
+  // Checkboxes state variables
   bool isSideMirrorChecked = false;
   bool isSignalLightsChecked = false;
   bool isTaillightsChecked = false;
@@ -137,30 +136,33 @@ class _InspectionScreenState extends State<InspectionScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  CheckboxListTile(
+                  RadioListTile<String>(
                     title: const Text("Motorcycle"),
-                    value: isMotorcycleChecked,
-                    onChanged: (bool? value) {
+                    value: 'Motorcycle',
+                    groupValue: selectedVehicleType,
+                    onChanged: (String? value) {
                       setState(() {
-                        isMotorcycleChecked = value ?? false;
+                        selectedVehicleType = value!;
                       });
                     },
                   ),
-                  CheckboxListTile(
+                  RadioListTile<String>(
                     title: const Text("E-trike"),
-                    value: isEtrikeChecked,
-                    onChanged: (bool? value) {
+                    value: 'E-trike',
+                    groupValue: selectedVehicleType,
+                    onChanged: (String? value) {
                       setState(() {
-                        isEtrikeChecked = value ?? false;
+                        selectedVehicleType = value!;
                       });
                     },
                   ),
-                  CheckboxListTile(
+                  RadioListTile<String>(
                     title: const Text("Tricycle"),
-                    value: isTricycleChecked,
-                    onChanged: (bool? value) {
+                    value: 'Tricycle',
+                    groupValue: selectedVehicleType,
+                    onChanged: (String? value) {
                       setState(() {
-                        isTricycleChecked = value ?? false;
+                        selectedVehicleType = value!;
                       });
                     },
                   ),
@@ -291,9 +293,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
                   onPressed: () {
                     // Clear action
                     setState(() {
-                      isMotorcycleChecked = false;
-                      isEtrikeChecked = false;
-                      isTricycleChecked = false;
+                      selectedVehicleType = 'Motorcycle';
                       isSideMirrorChecked = false;
                       isSignalLightsChecked = false;
                       isTaillightsChecked = false;

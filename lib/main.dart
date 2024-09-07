@@ -19,5 +19,5 @@ class MyApp extends StatelessWidget {
       theme: lightMode,
       home: const SignInScreen(),
     );
-  }
+  } 
 }
