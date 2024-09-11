@@ -32,44 +32,18 @@ class _ScanDocumentScreenState extends State<ScanDocumentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          color: Colors.black,
-          onPressed: () {
-            Navigator.pop(context); // Navigate back when the back button is pressed
-          },
-        ),
-        actions: [
-          CircleAvatar(
-            backgroundColor: Colors.grey.shade300,
-            child: const Icon(Icons.person),
-          ),
-          const SizedBox(width: 16),
-        ],
+        title: const Text('Scan Documents'),
+        backgroundColor: Colors.blue,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Center(
-              child: Text(
-                'REQUIREMENTS',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const SizedBox(height: 20), // Space between header and container
+      body: Column(
+        children: [
+          const SizedBox(height: 20), // Top padding
 
-            // Requirements Container
-            Container(
-              padding: const EdgeInsets.all(16.0),
+          // Requirements Container
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Container(
               decoration: BoxDecoration(
                 color: Colors.blue.shade100,
                 borderRadius: BorderRadius.circular(20),
@@ -144,8 +118,8 @@ class _ScanDocumentScreenState extends State<ScanDocumentScreen> {
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
