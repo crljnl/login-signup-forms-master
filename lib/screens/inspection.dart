@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class InspectionScreen extends StatefulWidget {
   const InspectionScreen({super.key});
@@ -23,6 +25,44 @@ class _InspectionScreenState extends State<InspectionScreen> {
   bool isLightInSidecarChecked = false;
 
   bool isNewRegistration = true;
+  String inspectorId = ''; // Inspector ID fetched from the server
+
+  // Controllers for text fields
+  final TextEditingController _applicantNameController = TextEditingController();
+  final TextEditingController _mtopIdController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Call login function to fetch inspectorId when the screen initializes
+    login('email@example.com', 'password123');
+  }
+
+  Future<void> login(String email, String password) async {
+    final response = await http.post(
+      Uri.parse('http://192.168.5.122:3000/login'),  // Replace with actual IP address if necessary
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        'email': email,
+        'password': password,
+      }),
+    );
+
+    // Print the response body to debug
+    print('Response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      setState(() {
+        inspectorId = data['user']['id'].toString();  // Make sure 'id' matches your JSON structure
+      });
+    } else {
+      // Handle errors or unsuccessful login attempts
+      print('Failed to log in with status code: ${response.statusCode}');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +75,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
         children: [
           const SizedBox(height: 20), // Top padding
 
-          // Search Section moved to top
+          // Inspector ID Section
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Column(
@@ -43,31 +83,14 @@ class _InspectionScreenState extends State<InspectionScreen> {
               children: [
                 Row(
                   children: [
-                    Expanded(
-                      child: TextField(
-                        decoration: InputDecoration(
-                          hintText: 'Search',
-                          prefixIcon: const Icon(Icons.search),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          filled: true,
-                          fillColor: Colors.grey.shade200,
-                        ),
+                    Text(
+                      'Inspector ID: $inspectorId', // Display Inspector ID
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 20),
-
-                // Inspection Number Input
-                const TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Inspector ID:',
-                    border: OutlineInputBorder(),
-                    filled: true,
-                    fillColor: Colors.grey,
-                  ),
                 ),
               ],
             ),
@@ -109,6 +132,49 @@ class _InspectionScreenState extends State<InspectionScreen> {
                   child: Text(
                     'Renewal',
                     style: TextStyle(color: !isNewRegistration ? Colors.white : Colors.black87),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Applicant Name and MTOP ID Input Fields
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Applicant Name:",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                TextFormField(
+                  controller: _applicantNameController,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    hintText: 'Enter applicant name',
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                const Text(
+                  "MTOP ID:",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                TextFormField(
+                  controller: _mtopIdController,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    hintText: 'Enter MTOP ID',
                   ),
                 ),
               ],
@@ -303,24 +369,20 @@ class _InspectionScreenState extends State<InspectionScreen> {
                       isVehicleRegistrationChecked = false;
                       isNotOpenPipeChecked = false;
                       isLightInSidecarChecked = false;
+                      
+                      // Clear text fields
+                      _applicantNameController.clear();
+                      _mtopIdController.clear();
                     });
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey.shade300,
-                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                  ),
-                  child: const Text(
-                    'Clear',
-                    style: TextStyle(color: Colors.black87),
-                  ),
+                  child: const Text('Clear'),
                 ),
                 ElevatedButton(
                   onPressed: () {
                     // Reject action
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                    backgroundColor: Colors.red, // Set background to red for reject
                   ),
                   child: const Text('Reject'),
                 ),
@@ -329,8 +391,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
                     // Approve action
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                    backgroundColor: Colors.green, // Set background to green for approve
                   ),
                   child: const Text('Approve'),
                 ),

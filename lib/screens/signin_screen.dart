@@ -20,51 +20,54 @@ class _SignInScreenState extends State<SignInScreen> {
   bool _isPasswordVisible = false;
 
   Future<void> _login() async {
-  if (_formSignInKey.currentState!.validate()) {
-    final email = _emailController.text;
-    final password = _passwordController.text;
+    if (_formSignInKey.currentState!.validate()) {
+      final email = _emailController.text;
+      final password = _passwordController.text;
 
-    final loginData = {
-      'email': email,
-      'password': password,
-    };
+      final loginData = {
+        'email': email,
+        'password': password,
+      };
 
-    try {
-      final response = await http.post(
-        Uri.parse('http://192.168.1.18:3000/login'),  // Use the correct server IP and port
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(loginData),
-      );
-
-      if (response.statusCode == 200) {
-        final responseBody = jsonDecode(response.body);
-        // Navigate to the dashboard on successful login
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const DashboardScreen()),
+      try {
+        final response = await http.post(
+          Uri.parse('http://192.168.5.122:3000/login'),  // Use the correct server IP and port
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode(loginData),
         );
-      } else if (response.statusCode == 401) {
-        // Invalid credentials
+
+        if (response.statusCode == 200) {
+          final responseBody = jsonDecode(response.body);
+          final String name = responseBody['user']['name'];  // Extract the user's name
+
+          // Navigate to the dashboard with the user's name
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DashboardScreen(name: name),
+            ),
+          );
+        } else if (response.statusCode == 401) {
+          // Invalid credentials
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Invalid credentials')),
+          );
+        } else {
+          // Other server errors
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('An error occurred. Please try again.')),
+          );
+        }
+      } catch (e) {
+        // Handle connection errors
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Invalid credentials')),
-        );
-      } else {
-        // Other server errors
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('An error occurred. Please try again.')),
+          const SnackBar(content: Text('Error connecting to the server')),
         );
       }
-    } catch (e) {
-      // Handle connection errors
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error connecting to the server')),
-      );
     }
   }
-}
-
 
   @override
   Widget build(BuildContext context) {

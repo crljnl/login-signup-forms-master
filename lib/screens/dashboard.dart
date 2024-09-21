@@ -4,7 +4,9 @@ import 'package:login_signup/screens/inspection.dart';
 import 'package:login_signup/screens/scandocu.dart';
 
 class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
+  final String name;
+
+  const DashboardScreen({super.key, required this.name});
 
   @override
   Widget build(BuildContext context) {
@@ -19,18 +21,42 @@ class DashboardScreen extends StatelessWidget {
     return Scaffold(
       body: Column(
         children: [
-          // Blue header with back button, title, and notification icon
+          // Blue header with logout button, title, and notification icon
           Container(
             color: Colors.blue, // Blue background for the header
             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 20.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Back button
+                // Logout button
                 IconButton(
-                  icon: Icon(Icons.arrow_back, color: Colors.white),
+                  icon: Icon(Icons.logout, color: Colors.white),
                   onPressed: () {
-                    Navigator.pop(context); // Navigate back when pressed
+                    // Show logout confirmation dialog
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text("Logout"),
+                          content: const Text("Are you sure you want to log out?"),
+                          actions: [
+                            TextButton(
+                              child: const Text("Cancel"),
+                              onPressed: () {
+                                Navigator.of(context).pop(); // Close the dialog
+                              },
+                            ),
+                            TextButton(
+                              child: const Text("Logout"),
+                              onPressed: () {
+                                Navigator.of(context).pop(); // Close the dialog
+                                Navigator.of(context).pop(); // Navigate back to the login screen or previous screen
+                              },
+                            ),
+                          ],
+                        );
+                      },
+                    );
                   },
                 ),
                 // Dashboard title
@@ -38,14 +64,14 @@ class DashboardScreen extends StatelessWidget {
                   'Dashboard',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: Color.fromARGB(255, 255, 255, 255), // White text
+                        color: const Color(0xFFFFFFFF), // White text
                       ),
                 ),
                 // Notification icon with red dot if applicable
                 Stack(
                   children: [
                     IconButton(
-                      icon: Icon(Icons.notifications, color: Colors.white),
+                      icon: const Icon(Icons.notifications, color: Colors.white),
                       onPressed: () {
                         // Show dialog with message based on the time
                         String message = showRedDot
@@ -76,7 +102,7 @@ class DashboardScreen extends StatelessWidget {
                         top: 11,
                         child: Container(
                           padding: const EdgeInsets.all(2),
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                             color: Colors.red,
                             shape: BoxShape.circle,
                           ),
@@ -87,6 +113,46 @@ class DashboardScreen extends StatelessWidget {
                         ),
                       ),
                   ],
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20.0),
+
+          // Greeting message inside a card for a more professional look
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 20.0),
+            padding: const EdgeInsets.all(20.0),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(15.0),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10.0,
+                  spreadRadius: 2.0,
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.person_outline,
+                  size: 40,
+                  color: Colors.blueAccent,
+                ),
+                const SizedBox(width: 15),
+                Expanded(
+                  child: Text(
+                    'Hi, $name! Welcome to the Dashboard.',
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
                 ),
               ],
             ),
