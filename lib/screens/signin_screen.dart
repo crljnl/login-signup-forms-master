@@ -41,12 +41,13 @@ class _SignInScreenState extends State<SignInScreen> {
         if (response.statusCode == 200) {
           final responseBody = jsonDecode(response.body);
           final String name = responseBody['user']['name'];  // Extract the user's name
+          final String inspectorId = responseBody['user']['inspector_id'];  // Extract the inspector's ID
 
-          // Navigate to the dashboard with the user's name
+          // Navigate to the dashboard with the user's name and inspector ID
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => DashboardScreen(name: name),
+              builder: (context) => DashboardScreen(name: name, inspectorId: inspectorId),
             ),
           );
         } else if (response.statusCode == 401) {

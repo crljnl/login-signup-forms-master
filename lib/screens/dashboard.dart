@@ -4,34 +4,30 @@ import 'package:login_signup/screens/scandocu.dart';
 
 class DashboardScreen extends StatelessWidget {
   final String name;
+  final String inspectorId;  // Add inspectorId
 
-  const DashboardScreen({super.key, required this.name});
+  const DashboardScreen({super.key, required this.name, required this.inspectorId});
 
   @override
   Widget build(BuildContext context) {
-    // Get the current time
     final currentTime = DateTime.now();
     final start = DateTime(currentTime.year, currentTime.month, currentTime.day, 8, 0);
     final end = DateTime(currentTime.year, currentTime.month, currentTime.day, 17, 0);
 
-    // Determine whether to show the red dot
     bool showRedDot = currentTime.isAfter(start) && currentTime.isBefore(end);
 
     return Scaffold(
       body: Column(
         children: [
-          // Blue header with logout button, title, and notification icon
           Container(
-            color: Colors.blue, // Blue background for the header
+            color: Colors.blue,
             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 20.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Logout button
                 IconButton(
                   icon: Icon(Icons.logout, color: Colors.white),
                   onPressed: () {
-                    // Show logout confirmation dialog
                     showDialog(
                       context: context,
                       builder: (BuildContext context) {
@@ -58,21 +54,18 @@ class DashboardScreen extends StatelessWidget {
                     );
                   },
                 ),
-                // Dashboard title
                 Text(
                   'Dashboard',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: const Color(0xFFFFFFFF), // White text
+                        color: const Color(0xFFFFFFFF),
                       ),
                 ),
-                // Notification icon with red dot if applicable
                 Stack(
                   children: [
                     IconButton(
                       icon: const Icon(Icons.notifications, color: Colors.white),
                       onPressed: () {
-                        // Show dialog with message based on the time
                         String message = showRedDot
                             ? "There is an inspection today"
                             : "No inspection today";
@@ -119,7 +112,7 @@ class DashboardScreen extends StatelessWidget {
 
           const SizedBox(height: 20.0),
 
-          // Greeting message inside a card for a more professional look
+          // Greeting message with inspector ID
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 20.0),
             padding: const EdgeInsets.all(20.0),
@@ -145,7 +138,7 @@ class DashboardScreen extends StatelessWidget {
                 const SizedBox(width: 15),
                 Expanded(
                   child: Text(
-                    'Hi, $name! Welcome to the Dashboard.',
+                    'Hi, $name! Greetings my inspection ka ngayon tanginaka Inspector ID: $inspectorId.',
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -159,14 +152,13 @@ class DashboardScreen extends StatelessWidget {
 
           const SizedBox(height: 20.0),
 
-          // Dashboard Buttons
           Expanded(
             child: Row(
               children: [
                 Expanded(
                   child: GridView.count(
                     padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 40.0),
-                    crossAxisCount: 2, // Two buttons in a row
+                    crossAxisCount: 2,
                     mainAxisSpacing: 20.0,
                     crossAxisSpacing: 20.0,
                     children: [
@@ -189,10 +181,10 @@ class DashboardScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const InspectionScreen(),
+                              builder: (context) => InspectionScreen(loggedInInspectorId: inspectorId),  // Pass inspectorId
                             ),
                           );
-                        },
+                        }
                       ),
                       _buildDashboardButton(
                         icon: Icons.analytics_outlined,
@@ -212,7 +204,6 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  // Method to build each dashboard button
   Widget _buildDashboardButton({
     required IconData icon,
     required String label,

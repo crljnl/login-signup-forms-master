@@ -3,7 +3,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class InspectionScreen extends StatefulWidget {
-  const InspectionScreen({super.key});
+  final String loggedInInspectorId; // Add the logged-in inspector ID
+
+  const InspectionScreen({super.key, required this.loggedInInspectorId});
 
   @override
   _InspectionScreenState createState() => _InspectionScreenState();
@@ -261,6 +263,9 @@ class _InspectionScreenState extends State<InspectionScreen> {
                         ? 'Invalid Inspector ID'
                         : null,
                   ),
+                  onChanged: (value) {
+                    // Logic to handle Inspector ID change if needed
+                  },
                 ),
               ],
             ),
@@ -435,19 +440,19 @@ class _InspectionScreenState extends State<InspectionScreen> {
 
           const SizedBox(height: 20),
 
-          // Submit Button with validation logic
+          // Submit Button with validation logic for "New" registration
           ElevatedButton(
             onPressed: selectedRegistrationType == 'New'
                 ? isMtopIdAvailable && _mtopIdController.text.length == 6
                     ? () {
                         if (_applicantNameController.text.isNotEmpty) {
-                          if (_inspectorIdController.text.isNotEmpty &&
-                              validInspectorIds.contains(_inspectorIdController.text)) {
+                          // Allow only the logged-in inspector to submit new registrations
+                          if (_inspectorIdController.text == widget.loggedInInspectorId) {
                             submitInspection();
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Invalid Inspector ID'),
+                                content: Text('Only the logged-in inspector can submit this form.'),
                                 backgroundColor: Colors.red,
                                 duration: Duration(seconds: 2),
                               ),
@@ -476,6 +481,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
                       }
                 : isMtopIdValidForRenewal
                     ? () {
+                        // No restrictions for renewal submissions
                         if (_inspectorIdController.text.isNotEmpty &&
                             validInspectorIds.contains(_inspectorIdController.text)) {
                           submitInspection();
@@ -489,7 +495,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
                           );
                         }
                       }
-                    : null, // Disable submit button if MTOP ID already exists for new registrations or invalid for renewal
+                    : null, // Disable submit button if MTOP ID is invalid for renewal
             child: const Text('Submit Inspection'),
           ),
 
