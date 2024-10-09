@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:login_signup/screens/inspection.dart';
 import 'package:login_signup/screens/scandocu.dart';
 
