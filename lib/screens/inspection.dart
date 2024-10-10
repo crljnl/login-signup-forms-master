@@ -41,7 +41,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
   // Fetch valid inspector IDs
   Future<void> fetchInspectorIds() async {
     final response = await http.get(
-      Uri.parse('http://192.168.1.14:3000/inspectors'),
+      Uri.parse('http://192.168.1.20:3000/inspectors'),
     );
 
     if (response.statusCode == 200) {
@@ -57,7 +57,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
   // Check if MTOP ID exists for new registrations
   Future<void> checkMtopIdAvailability(String mtopId) async {
     final response = await http.get(
-      Uri.parse('http://192.168.1.14:3000/inspection/$mtopId'),
+      Uri.parse('http://192.168.1.20:3000/inspection/$mtopId'),
     );
 
     if (response.statusCode == 200) {
@@ -81,7 +81,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
   // Fetch inspection details for renewal
   Future<void> fetchInspectionDetails(String mtopId) async {
     final response = await http.get(
-      Uri.parse('http://192.168.1.14:3000/inspection/$mtopId'),
+      Uri.parse('http://192.168.1.20:3000/inspection/$mtopId'),
     );
 
     if (response.statusCode == 200) {
@@ -123,14 +123,37 @@ class _InspectionScreenState extends State<InspectionScreen> {
   }
 
   // Submitting the inspection form data to the backend
-  Future<void> submitInspection() async {
+// Submitting the inspection form data to the backend
+Future<void> submitInspection() async {
+  print("Submitting inspection...");
+  if (selectedRegistrationType == 'New') {
+    if (!isMtopIdAvailable) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('MTOP ID already exists, please choose another for new registration.'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+  } else if (selectedRegistrationType == 'Renewal' && !isMtopIdValidForRenewal) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('MTOP ID is not valid for renewal.'),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+    return;
+  }
+
+  try {
     final response = await http.post(
-      Uri.parse('http://192.168.1.14:3000/add-inspection'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
+      Uri.parse('http://192.168.1.20:3000/add-inspection'),
+      headers: <String, String>{'Content-Type': 'application/json; charset=UTF-8'},
       body: jsonEncode({
-        'inspector_id': _inspectorIdController.text,
+        'inspector_id': widget.loggedInInspectorId,
         'applicant_name': _applicantNameController.text,
         'mtop_id': _mtopIdController.text,
         'vehicle_type': selectedVehicleType,
@@ -147,7 +170,8 @@ class _InspectionScreenState extends State<InspectionScreen> {
       }),
     );
 
-    if (response.statusCode == 200) {
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      print("Inspection submitted successfully");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Inspection submitted successfully!'),
@@ -156,15 +180,11 @@ class _InspectionScreenState extends State<InspectionScreen> {
         ),
       );
 
-      // Clear all fields for both New and Renewal submissions
       setState(() {
         _applicantNameController.clear();
         _mtopIdController.clear();
-        _inspectorIdController.clear();
         selectedVehicleType = 'Motorcycle';
         selectedRegistrationType = 'New';
-
-        // Clear checklist fields
         isSideMirrorChecked = false;
         isSignalLightsChecked = false;
         isTaillightsChecked = false;
@@ -176,18 +196,29 @@ class _InspectionScreenState extends State<InspectionScreen> {
         isLightInSidecarChecked = false;
         isMtopIdAvailable = true;
         isMtopIdValidForRenewal = false;
-        isMtopIdEditable = true; // Reset MTOP ID editable state
+        isMtopIdEditable = true;
       });
     } else {
+      print('Failed to submit inspection. Status Code: ${response.statusCode}');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Failed to submit inspection.'),
+          content: Text('Failed to submit inspection. Server error: ${response.statusCode}'),
           backgroundColor: Colors.red,
           duration: const Duration(seconds: 2),
         ),
       );
     }
+  } catch (error) {
+    print('Error submitting inspection: $error');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Error submitting inspection. Please check your connection.'),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -441,64 +472,31 @@ class _InspectionScreenState extends State<InspectionScreen> {
           const SizedBox(height: 20),
 
           // Submit Button with validation logic for "New" registration
-          ElevatedButton(
-            onPressed: selectedRegistrationType == 'New'
-                ? isMtopIdAvailable && _mtopIdController.text.length == 6
-                    ? () {
-                        if (_applicantNameController.text.isNotEmpty) {
-                          // Allow only the logged-in inspector to submit new registrations
-                          if (_inspectorIdController.text == widget.loggedInInspectorId) {
-                            submitInspection();
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Only the logged-in inspector can submit this form.'),
-                                backgroundColor: Colors.red,
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                          }
-                        } else {
-                          // Show warning if applicant's name is missing
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Applicant Name is required'),
-                              backgroundColor: Colors.red,
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                        }
-                      }
-                    : () {
-                        // Show warning if MTOP ID is less than 6 characters
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('MTOP ID must be exactly 6 characters'),
-                            backgroundColor: Colors.red,
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      }
-                : isMtopIdValidForRenewal
-                    ? () {
-                        // No restrictions for renewal submissions
-                        if (_inspectorIdController.text.isNotEmpty &&
-                            validInspectorIds.contains(_inspectorIdController.text)) {
-                          submitInspection();
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Invalid Inspector ID'),
-                              backgroundColor: Colors.red,
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                        }
-                      }
-                    : null, // Disable submit button if MTOP ID is invalid for renewal
-            child: const Text('Submit Inspection'),
-          ),
-
+                                  ElevatedButton(
+                onPressed: () {
+                  if (_mtopIdController.text.length != 6) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('MTOP ID must be exactly 6 characters'),
+                        backgroundColor: Colors.red,
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  } else if (_applicantNameController.text.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Applicant Name is required'),
+                        backgroundColor: Colors.red,
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  } else {
+                    // Trigger the form submission
+                    submitInspection();
+                  }
+                },
+                child: const Text('Submit Inspection'),
+              ),
           const SizedBox(height: 20),
         ],
       ),
