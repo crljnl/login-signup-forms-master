@@ -31,7 +31,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
       try {
         final response = await http.post(
-          Uri.parse('http://192.168.0.106:3000/login'),  // Use the correct server IP and port
+          Uri.parse('http://192.168.100.170:3000/login'),  // Use the correct server IP and port
           headers: {
             'Content-Type': 'application/json',
           },

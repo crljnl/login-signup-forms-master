@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter/services.dart'; // Import this for TextInputFormatter
 
 class InspectionScreen extends StatefulWidget {
-  final String loggedInInspectorId; // Add the logged-in inspector ID
+  final String loggedInInspectorId;
 
   const InspectionScreen({super.key, required this.loggedInInspectorId});
 
@@ -14,13 +15,12 @@ class InspectionScreen extends StatefulWidget {
 class _InspectionScreenState extends State<InspectionScreen> {
   List<String> validInspectorIds = [];
 
-  // Default values
   String selectedVehicleType = 'Motorcycle';
   String selectedRegistrationType = 'New';
 
-  bool isMtopIdAvailable = true; // Flag to check if MTOP ID is available for New registrations
-  bool isMtopIdValidForRenewal = false; // Flag to check if MTOP ID is valid for Renewal
-  bool isMtopIdEditable = true; // Flag to allow or prevent MTOP ID editing in Renewal
+  bool isMtopIdAvailable = true;
+  bool isMtopIdValidForRenewal = false;
+  bool isMtopIdEditable = true;
 
   // Checkboxes state variables
   bool isSideMirrorChecked = false;
@@ -33,15 +33,13 @@ class _InspectionScreenState extends State<InspectionScreen> {
   bool isNotOpenPipeChecked = false;
   bool isLightInSidecarChecked = false;
 
-  // Controllers for text fields
   final TextEditingController _applicantNameController = TextEditingController();
   final TextEditingController _mtopIdController = TextEditingController();
   final TextEditingController _inspectorIdController = TextEditingController();
 
-  // Fetch valid inspector IDs
   Future<void> fetchInspectorIds() async {
     final response = await http.get(
-      Uri.parse('http://192.168.0.106:3000/inspectors'),
+      Uri.parse('http://192.168.100.170:3000/inspectors'),
     );
 
     if (response.statusCode == 200) {
@@ -54,15 +52,14 @@ class _InspectionScreenState extends State<InspectionScreen> {
     }
   }
 
-  // Check if MTOP ID exists for new registrations
   Future<void> checkMtopIdAvailability(String mtopId) async {
     final response = await http.get(
-      Uri.parse('http://192.168.0.106:3000/inspection/$mtopId'),
+      Uri.parse('http://192.168.100.170:3000/inspection/$mtopId'),
     );
 
     if (response.statusCode == 200) {
       setState(() {
-        isMtopIdAvailable = false; // MTOP ID already exists in the database
+        isMtopIdAvailable = false;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('MTOP ID already exists, choose another for new registration'),
@@ -73,21 +70,19 @@ class _InspectionScreenState extends State<InspectionScreen> {
       });
     } else {
       setState(() {
-        isMtopIdAvailable = true; // MTOP ID is available for new registration
+        isMtopIdAvailable = true;
       });
     }
   }
 
-  // Fetch inspection details for renewal
   Future<void> fetchInspectionDetails(String mtopId) async {
     final response = await http.get(
-      Uri.parse('http://192.168.0.106:3000/inspection/$mtopId'),
+      Uri.parse('http://192.168.100.170:3000/inspection/$mtopId'),
     );
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       setState(() {
-        // Populate form fields with existing data for renewals
         _applicantNameController.text = data['applicant_name'];
         isSideMirrorChecked = data['side_mirror'];
         isSignalLightsChecked = data['signal_lights'];
@@ -98,13 +93,13 @@ class _InspectionScreenState extends State<InspectionScreen> {
         isVehicleRegistrationChecked = data['vehicle_registration'];
         isNotOpenPipeChecked = data['not_open_pipe'];
         isLightInSidecarChecked = data['light_in_sidecar'];
-        isMtopIdValidForRenewal = true; // Valid MTOP ID for renewal
-        isMtopIdEditable = false; // Prevent further editing of MTOP ID
+        isMtopIdValidForRenewal = true;
+        isMtopIdEditable = false;
       });
     } else {
       setState(() {
-        isMtopIdValidForRenewal = false; // Invalid MTOP ID for renewal
-        isMtopIdEditable = true; // Allow editing in case of invalid MTOP ID
+        isMtopIdValidForRenewal = false;
+        isMtopIdEditable = true;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('MTOP ID not found, invalid for renewal'),
@@ -119,14 +114,11 @@ class _InspectionScreenState extends State<InspectionScreen> {
   @override
   void initState() {
     super.initState();
-    fetchInspectorIds(); // Fetch inspector IDs on initialization
-    _inspectorIdController.text = widget.loggedInInspectorId; // Set logged-in inspector ID
+    fetchInspectorIds();
+    _inspectorIdController.text = widget.loggedInInspectorId;
   }
 
-  // Submitting the inspection form data to the backend
-  Future<void> submitInspection() async {
-    print("Submitting inspection...");
-
+  Future<void> submitInspection(String inspectionStatus) async {
     if (_inspectorIdController.text != widget.loggedInInspectorId) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -138,31 +130,52 @@ class _InspectionScreenState extends State<InspectionScreen> {
       return;
     }
 
-    if (selectedRegistrationType == 'New') {
-      if (!isMtopIdAvailable) {
+    // For "Approved" submission: Ensure all items are checked
+    if (inspectionStatus == 'Approved') {
+      if (!isSideMirrorChecked || !isSignalLightsChecked || !isTaillightsChecked ||
+          !isMotorNumberChecked || !isGarbageCanChecked || !isChassisNumberChecked ||
+          !isVehicleRegistrationChecked || !isNotOpenPipeChecked || !isLightInSidecarChecked) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('MTOP ID already exists, please choose another for new registration.'),
+          const SnackBar(
+            content: Text('All checklist items must be checked for an Approved submission.'),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 2),
+            duration: Duration(seconds: 2),
           ),
         );
         return;
       }
-    } else if (selectedRegistrationType == 'Renewal' && !isMtopIdValidForRenewal) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('MTOP ID is not valid for renewal.'),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-      return;
+    }
+
+    // For "Not Approved" submission: At least one item must be unchecked, and if all items are checked, block submission
+    if (inspectionStatus == 'Not Approved') {
+      int uncheckedCount = 0;
+
+      if (!isSideMirrorChecked) uncheckedCount++;
+      if (!isSignalLightsChecked) uncheckedCount++;
+      if (!isTaillightsChecked) uncheckedCount++;
+      if (!isMotorNumberChecked) uncheckedCount++;
+      if (!isGarbageCanChecked) uncheckedCount++;
+      if (!isChassisNumberChecked) uncheckedCount++;
+      if (!isVehicleRegistrationChecked) uncheckedCount++;
+      if (!isNotOpenPipeChecked) uncheckedCount++;
+      if (!isLightInSidecarChecked) uncheckedCount++;
+
+      // Block submission if all items are checked
+      if (uncheckedCount == 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Cannot submit as Not Approved when all items are checked.'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 2),
+          ),
+        );
+        return;
+      }
     }
 
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.0.106:3000/add-inspection'),
+        Uri.parse('http://192.168.100.170:3000/add-inspection'),
         headers: <String, String>{'Content-Type': 'application/json; charset=UTF-8'},
         body: jsonEncode({
           'inspector_id': widget.loggedInInspectorId,
@@ -179,19 +192,20 @@ class _InspectionScreenState extends State<InspectionScreen> {
           'vehicle_registration': isVehicleRegistrationChecked,
           'not_open_pipe': isNotOpenPipeChecked,
           'light_in_sidecar': isLightInSidecarChecked,
+          'inspection_status': inspectionStatus,
         }),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print("Inspection submitted successfully");
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Inspection submitted successfully!'),
+            content: Text('Inspection $inspectionStatus successfully!'),
             backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
+            duration: Duration(seconds: 2),
           ),
         );
 
+        // Reset form after submission
         setState(() {
           _applicantNameController.clear();
           _mtopIdController.clear();
@@ -223,10 +237,10 @@ class _InspectionScreenState extends State<InspectionScreen> {
     } catch (error) {
       print('Error submitting inspection: $error');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Error submitting inspection. Please check your connection.'),
+        const SnackBar(
+          content: Text('Error submitting inspection. Please check your connection.'),
           backgroundColor: Colors.red,
-          duration: const Duration(seconds: 2),
+          duration: Duration(seconds: 2),
         ),
       );
     }
@@ -241,7 +255,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
       ),
       body: Column(
         children: [
-          const SizedBox(height: 20), // Top padding
+          const SizedBox(height: 20),
 
           // Registration Type Dropdown
           Padding(
@@ -300,7 +314,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Inspector ID (Auto-filled)',
                   ),
-                  enabled: false, // Inspector ID is auto-filled and cannot be edited
+                  enabled: false,
                 ),
               ],
             ),
@@ -328,24 +342,13 @@ class _InspectionScreenState extends State<InspectionScreen> {
                     ),
                     enabled: selectedRegistrationType == 'Renewal'
                         ? isMtopIdEditable
-                        : true, // Disable MTOP ID field if it's in renewal mode and fetched
+                        : true,
+                    inputFormatters: [
+                      LengthLimitingTextInputFormatter(6), // Limit MTOP ID to 6 characters
+                    ],
                     onChanged: (value) {
                       if (selectedRegistrationType == 'New') {
-                        if (value.length > 6) {
-                          setState(() {
-                            _mtopIdController.text = value.substring(0, 6);
-                            _mtopIdController.selection = TextSelection.fromPosition(
-                              TextPosition(offset: _mtopIdController.text.length),
-                            );
-                          });
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('MTOP ID cannot exceed 6 characters'),
-                              backgroundColor: Colors.red,
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                        } else if (value.length == 6) {
+                        if (value.length == 6) {
                           checkMtopIdAvailability(value);
                         }
                       } else if (selectedRegistrationType == 'Renewal' && value.length == 6) {
@@ -463,7 +466,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
 
           const SizedBox(height: 20),
 
-          // Submit Button
+          // Approved Button
           ElevatedButton(
             onPressed: () {
               if (_mtopIdController.text.length != 6) {
@@ -483,11 +486,40 @@ class _InspectionScreenState extends State<InspectionScreen> {
                   ),
                 );
               } else {
-                submitInspection();
+                submitInspection('Approved');
               }
             },
-            child: const Text('Submit Inspection'),
+            child: const Text('Submit Approved Inspection'),
           ),
+
+          const SizedBox(height: 20),
+
+          // Not Approved Button
+          ElevatedButton(
+            onPressed: () {
+              if (_mtopIdController.text.length != 6) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('MTOP ID must be exactly 6 characters'),
+                    backgroundColor: Colors.red,
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              } else if (_applicantNameController.text.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Applicant Name is required'),
+                    backgroundColor: Colors.red,
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              } else {
+                submitInspection('Not Approved');
+              }
+            },
+            child: const Text('Submit Not Approved Inspection'),
+          ),
+
           const SizedBox(height: 20),
         ],
       ),
