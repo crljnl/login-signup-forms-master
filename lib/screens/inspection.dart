@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter/services.dart'; // Import this for TextInputFormatter
+import 'package:flutter/services.dart';
 
 class InspectionScreen extends StatefulWidget {
   final String loggedInInspectorId;
@@ -130,6 +130,9 @@ class _InspectionScreenState extends State<InspectionScreen> {
       return;
     }
 
+    // Initialize a list for storing unchecked reasons
+    List<String> reasonsNotApproved = [];
+
     // For "Approved" submission: Ensure all items are checked
     if (inspectionStatus == 'Approved') {
       if (!isSideMirrorChecked || !isSignalLightsChecked || !isTaillightsChecked ||
@@ -146,22 +149,19 @@ class _InspectionScreenState extends State<InspectionScreen> {
       }
     }
 
-    // For "Not Approved" submission: At least one item must be unchecked, and if all items are checked, block submission
+    // For "Not Approved" submission: Collect unchecked items
     if (inspectionStatus == 'Not Approved') {
-      int uncheckedCount = 0;
+      if (!isSideMirrorChecked) reasonsNotApproved.add('Side Mirror');
+      if (!isSignalLightsChecked) reasonsNotApproved.add('Signal Lights');
+      if (!isTaillightsChecked) reasonsNotApproved.add('Taillights');
+      if (!isMotorNumberChecked) reasonsNotApproved.add('Motor Number');
+      if (!isGarbageCanChecked) reasonsNotApproved.add('Garbage Can');
+      if (!isChassisNumberChecked) reasonsNotApproved.add('Chassis Number');
+      if (!isVehicleRegistrationChecked) reasonsNotApproved.add('Vehicle Registration');
+      if (!isNotOpenPipeChecked) reasonsNotApproved.add('Not Open Pipe');
+      if (!isLightInSidecarChecked) reasonsNotApproved.add('Light in Sidecar');
 
-      if (!isSideMirrorChecked) uncheckedCount++;
-      if (!isSignalLightsChecked) uncheckedCount++;
-      if (!isTaillightsChecked) uncheckedCount++;
-      if (!isMotorNumberChecked) uncheckedCount++;
-      if (!isGarbageCanChecked) uncheckedCount++;
-      if (!isChassisNumberChecked) uncheckedCount++;
-      if (!isVehicleRegistrationChecked) uncheckedCount++;
-      if (!isNotOpenPipeChecked) uncheckedCount++;
-      if (!isLightInSidecarChecked) uncheckedCount++;
-
-      // Block submission if all items are checked
-      if (uncheckedCount == 0) {
+      if (reasonsNotApproved.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Cannot submit as Not Approved when all items are checked.'),
@@ -193,6 +193,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
           'not_open_pipe': isNotOpenPipeChecked,
           'light_in_sidecar': isLightInSidecarChecked,
           'inspection_status': inspectionStatus,
+          'reason_not_approved': reasonsNotApproved.join(', ') // Join unchecked reasons
         }),
       );
 
