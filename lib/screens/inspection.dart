@@ -146,6 +146,9 @@ class _InspectionScreenState extends State<InspectionScreen> {
           ),
         );
         return;
+      } else {
+        // No unchecked items, so set reason to "No reason for not approved"
+        reasonsNotApproved.add('No reason for not approved');
       }
     }
 
