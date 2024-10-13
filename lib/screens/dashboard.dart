@@ -26,7 +26,7 @@ class DashboardScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 IconButton(
-                  icon: Icon(Icons.logout, color: Colors.white),
+                  icon: const Icon(Icons.logout, color: Colors.white),
                   onPressed: () {
                     showDialog(
                       context: context,
@@ -215,7 +215,7 @@ class DashboardScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(15.0),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
               color: Colors.black12,
               blurRadius: 5.0,

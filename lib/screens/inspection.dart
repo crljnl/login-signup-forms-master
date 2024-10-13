@@ -61,10 +61,10 @@ class _InspectionScreenState extends State<InspectionScreen> {
       setState(() {
         isMtopIdAvailable = false;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('MTOP ID already exists, choose another for new registration'),
+          const SnackBar(
+            content: Text('MTOP ID already exists, choose another for new registration'),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 2),
+            duration: Duration(seconds: 2),
           ),
         );
       });
@@ -101,10 +101,10 @@ class _InspectionScreenState extends State<InspectionScreen> {
         isMtopIdValidForRenewal = false;
         isMtopIdEditable = true;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('MTOP ID not found, invalid for renewal'),
+          const SnackBar(
+            content: Text('MTOP ID not found, invalid for renewal'),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 2),
+            duration: Duration(seconds: 2),
           ),
         );
       });
@@ -121,10 +121,10 @@ class _InspectionScreenState extends State<InspectionScreen> {
   Future<void> submitInspection(String inspectionStatus) async {
     if (_inspectorIdController.text != widget.loggedInInspectorId) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('You can only submit inspections with your inspector ID.'),
+        const SnackBar(
+          content: Text('You can only submit inspections with your inspector ID.'),
           backgroundColor: Colors.red,
-          duration: const Duration(seconds: 2),
+          duration: Duration(seconds: 2),
         ),
       );
       return;
@@ -205,7 +205,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
           SnackBar(
             content: Text('Inspection $inspectionStatus successfully!'),
             backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
+            duration: const Duration(seconds: 2),
           ),
         );
 
