@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:login_signup/screens/inspection.dart';
 import 'package:login_signup/screens/scandocu.dart';
+import 'package:login_signup/screens/reports.dart'; // Import ReportsScreen
 
 class DashboardScreen extends StatelessWidget {
   final String name;
-  final String inspectorId;  // Add inspectorId
+  final String inspectorId;
 
   const DashboardScreen({super.key, required this.name, required this.inspectorId});
 
@@ -138,7 +139,7 @@ class DashboardScreen extends StatelessWidget {
                 const SizedBox(width: 15),
                 Expanded(
                   child: Text(
-                    'Hi, $name! Greetings my inspection ka ngayon tanginaka Inspector ID: $inspectorId.',
+                    'Hi, $name! Greetings, Inspector ID: $inspectorId.',
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -181,7 +182,7 @@ class DashboardScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => InspectionScreen(loggedInInspectorId: inspectorId),  // Pass inspectorId
+                              builder: (context) => InspectionScreen(loggedInInspectorId: inspectorId),
                             ),
                           );
                         }
@@ -190,7 +191,12 @@ class DashboardScreen extends StatelessWidget {
                         icon: Icons.analytics_outlined,
                         label: 'Reports',
                         onTap: () {
-                          // Handle Reports action
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ReportsScreen(inspectorId: inspectorId),
+                            ),
+                          );
                         },
                       ),
                     ],

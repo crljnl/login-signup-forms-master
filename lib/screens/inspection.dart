@@ -39,7 +39,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
 
   Future<void> fetchInspectorIds() async {
     final response = await http.get(
-      Uri.parse('http://192.168.100.170:3000/inspectors'),
+      Uri.parse('http://192.168.1.3:3000/inspectors'),
     );
 
     if (response.statusCode == 200) {
@@ -54,7 +54,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
 
   Future<void> checkMtopIdAvailability(String mtopId) async {
     final response = await http.get(
-      Uri.parse('http://192.168.100.170:3000/inspection/$mtopId'),
+      Uri.parse('http://192.168.1.3:3000/inspection/$mtopId'),
     );
 
     if (response.statusCode == 200) {
@@ -77,7 +77,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
 
   Future<void> fetchInspectionDetails(String mtopId) async {
     final response = await http.get(
-      Uri.parse('http://192.168.100.170:3000/inspection/$mtopId'),
+      Uri.parse('http://192.168.1.3:3000/inspection/$mtopId'),
     );
 
     if (response.statusCode == 200) {
@@ -178,7 +178,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.100.170:3000/add-inspection'),
+        Uri.parse('http://192.168.1.3:3000/add-inspection'),
         headers: <String, String>{'Content-Type': 'application/json; charset=UTF-8'},
         body: jsonEncode({
           'inspector_id': widget.loggedInInspectorId,
