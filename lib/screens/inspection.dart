@@ -135,9 +135,15 @@ class _InspectionScreenState extends State<InspectionScreen> {
 
     // For "Approved" submission: Ensure all items are checked
     if (inspectionStatus == 'Approved') {
-      if (!isSideMirrorChecked || !isSignalLightsChecked || !isTaillightsChecked ||
-          !isMotorNumberChecked || !isGarbageCanChecked || !isChassisNumberChecked ||
-          !isVehicleRegistrationChecked || !isNotOpenPipeChecked || !isLightInSidecarChecked) {
+      if (!isSideMirrorChecked ||
+          !isSignalLightsChecked ||
+          !isTaillightsChecked ||
+          !isMotorNumberChecked ||
+          !isGarbageCanChecked ||
+          !isChassisNumberChecked ||
+          !isVehicleRegistrationChecked ||
+          !isNotOpenPipeChecked ||
+          !isLightInSidecarChecked) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('All checklist items must be checked for an Approved submission.'),
@@ -147,7 +153,6 @@ class _InspectionScreenState extends State<InspectionScreen> {
         );
         return;
       } else {
-        // No unchecked items, so set reason to "No reason for not approved"
         reasonsNotApproved.add('No reason for not approved');
       }
     }
@@ -255,278 +260,226 @@ class _InspectionScreenState extends State<InspectionScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Vehicle Inspection'),
-        backgroundColor: Colors.blue,
+        backgroundColor: Color.fromARGB(255, 58, 157, 250),
+        elevation: 4,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.help_outline, color: Colors.white),
+            onPressed: () {
+              // Add help button functionality if needed
+            },
+          ),
+        ],
       ),
-      body: Column(
-        children: [
-          const SizedBox(height: 20),
-
-          // Registration Type Dropdown
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Select Registration Type:'),
-                DropdownButton<String>(
-                  value: selectedRegistrationType,
-                  items: const [
-                    DropdownMenuItem(value: 'New', child: Text('New')),
-                    DropdownMenuItem(value: 'Renewal', child: Text('Renewal')),
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      selectedRegistrationType = value!;
-                      if (value == 'New') {
-                        _applicantNameController.clear();
-                        _mtopIdController.clear();
-                        isSideMirrorChecked = false;
-                        isSignalLightsChecked = false;
-                        isTaillightsChecked = false;
-                        isMotorNumberChecked = false;
-                        isGarbageCanChecked = false;
-                        isChassisNumberChecked = false;
-                        isVehicleRegistrationChecked = false;
-                        isNotOpenPipeChecked = false;
-                        isLightInSidecarChecked = false;
-                        isMtopIdAvailable = true;
-                        isMtopIdValidForRenewal = false;
-                        isMtopIdEditable = true;
-                      } else {
-                        isMtopIdAvailable = true;
-                        isMtopIdValidForRenewal = false;
-                        isMtopIdEditable = true;
-                        _mtopIdController.clear();
-                      }
-                    });
-                  },
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Inspector ID Input Section
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextField(
-                  controller: _inspectorIdController,
-                  decoration: const InputDecoration(
-                    labelText: 'Inspector ID (Auto-filled)',
-                  ),
-                  enabled: false,
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Form Fields
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // Header Section
+            const SizedBox(height: 10),
+            Expanded(
               child: ListView(
                 children: [
-                  TextField(
-                    controller: _applicantNameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Applicant Name',
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: _mtopIdController,
-                    decoration: const InputDecoration(
-                      labelText: 'MTOP ID',
-                    ),
-                    enabled: selectedRegistrationType == 'Renewal'
-                        ? isMtopIdEditable
-                        : true,
-                    inputFormatters: [
-                      LengthLimitingTextInputFormatter(6), // Limit MTOP ID to 6 characters
-                    ],
-                    onChanged: (value) {
-                      if (selectedRegistrationType == 'New') {
-                        if (value.length == 6) {
-                          checkMtopIdAvailability(value);
-                        }
-                      } else if (selectedRegistrationType == 'Renewal' && value.length == 6) {
-                        if (isMtopIdEditable) {
-                          fetchInspectionDetails(value);
-                        }
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Vehicle Type Dropdown
-                  DropdownButton<String>(
+                  // Vehicle type dropdown
+                  buildDropdown(
+                    title: "Select Vehicle Type",
                     value: selectedVehicleType,
-                    items: const [
-                      DropdownMenuItem(value: 'Motorcycle', child: Text('Motorcycle')),
-                      DropdownMenuItem(value: 'Tricycle', child: Text('Tricycle')),
-                      DropdownMenuItem(value: 'Etrike', child: Text('Etrike')),
-                    ],
+                    items: const ['Motorcycle', 'Tricycle', 'Etrike'],
                     onChanged: (value) {
                       setState(() {
                         selectedVehicleType = value!;
                       });
                     },
                   ),
+                  const SizedBox(height: 10),
+
+                  // Registration type dropdown
+                  buildDropdown(
+                    title: "Registration Type",
+                    value: selectedRegistrationType,
+                    items: const ['New', 'Renewal'],
+                    onChanged: (value) {
+                      setState(() {
+                        selectedRegistrationType = value!;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Applicant Name
+                  buildTextField(
+                    controller: _applicantNameController,
+                    label: 'Applicant Name',
+                    icon: Icons.person,
+                  ),
+                  const SizedBox(height: 20),
+
+                  // MTOP ID
+                  buildTextField(
+                    controller: _mtopIdController,
+                    label: 'MTOP ID',
+                    icon: Icons.directions_car,
+                    inputFormatters: [LengthLimitingTextInputFormatter(6)],
+                    enabled: selectedRegistrationType == 'Renewal'
+                        ? isMtopIdEditable
+                        : true,
+                    onChanged: (value) {
+                      if (selectedRegistrationType == 'New' && value.length == 6) {
+                        checkMtopIdAvailability(value);
+                      } else if (selectedRegistrationType == 'Renewal' && value.length == 6) {
+                        fetchInspectionDetails(value);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Checklist Items
+                  buildChecklistTile('Side Mirror', isSideMirrorChecked, Icons.car_repair, (bool? value) {
+                    setState(() {
+                      isSideMirrorChecked = value!;
+                    });
+                  }),
+                  buildChecklistTile('Signal Lights', isSignalLightsChecked, Icons.lightbulb, (bool? value) {
+                    setState(() {
+                      isSignalLightsChecked = value!;
+                    });
+                  }),
+                  buildChecklistTile('Taillights', isTaillightsChecked, Icons.traffic, (bool? value) {
+                    setState(() {
+                      isTaillightsChecked = value!;
+                    });
+                  }),
+                  buildChecklistTile('Motor Number', isMotorNumberChecked, Icons.format_list_numbered, (bool? value) {
+                    setState(() {
+                      isMotorNumberChecked = value!;
+                    });
+                  }),
+                  buildChecklistTile('Garbage Can', isGarbageCanChecked, Icons.delete, (bool? value) {
+                    setState(() {
+                      isGarbageCanChecked = value!;
+                    });
+                  }),
+                  buildChecklistTile('Chassis Number', isChassisNumberChecked, Icons.build, (bool? value) {
+                    setState(() {
+                      isChassisNumberChecked = value!;
+                    });
+                  }),
+                  buildChecklistTile('Vehicle Registration', isVehicleRegistrationChecked, Icons.assignment, (bool? value) {
+                    setState(() {
+                      isVehicleRegistrationChecked = value!;
+                    });
+                  }),
+                  buildChecklistTile('Not Open Pipe', isNotOpenPipeChecked, Icons.no_stroller, (bool? value) {
+                    setState(() {
+                      isNotOpenPipeChecked = value!;
+                    });
+                  }),
+                  buildChecklistTile('Light in Sidecar', isLightInSidecarChecked, Icons.lightbulb_outline, (bool? value) {
+                    setState(() {
+                      isLightInSidecarChecked = value!;
+                    });
+                  }),
 
                   const SizedBox(height: 20),
 
-                  // Checklist of Vehicle Requirements
-                  CheckboxListTile(
-                    title: const Text('Side Mirror'),
-                    value: isSideMirrorChecked,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        isSideMirrorChecked = value!;
-                      });
-                    },
-                  ),
-                  CheckboxListTile(
-                    title: const Text('Signal Lights'),
-                    value: isSignalLightsChecked,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        isSignalLightsChecked = value!;
-                      });
-                    },
-                  ),
-                  CheckboxListTile(
-                    title: const Text('Taillights'),
-                    value: isTaillightsChecked,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        isTaillightsChecked = value!;
-                      });
-                    },
-                  ),
-                  CheckboxListTile(
-                    title: const Text('Motor Number'),
-                    value: isMotorNumberChecked,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        isMotorNumberChecked = value!;
-                      });
-                    },
-                  ),
-                  CheckboxListTile(
-                    title: const Text('Garbage Can'),
-                    value: isGarbageCanChecked,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        isGarbageCanChecked = value!;
-                      });
-                    },
-                  ),
-                  CheckboxListTile(
-                    title: const Text('Chassis Number'),
-                    value: isChassisNumberChecked,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        isChassisNumberChecked = value!;
-                      });
-                    },
-                  ),
-                  CheckboxListTile(
-                    title: const Text('Vehicle Registration'),
-                    value: isVehicleRegistrationChecked,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        isVehicleRegistrationChecked = value!;
-                      });
-                    },
-                  ),
-                  CheckboxListTile(
-                    title: const Text('Not Open Pipe'),
-                    value: isNotOpenPipeChecked,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        isNotOpenPipeChecked = value!;
-                      });
-                    },
-                  ),
-                  CheckboxListTile(
-                    title: const Text('Light in Sidecar'),
-                    value: isLightInSidecarChecked,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        isLightInSidecarChecked = value!;
-                      });
-                    },
-                  ),
+                  // Submit buttons
+                  buildSubmitButton('Submit Approved Inspection', Colors.green, 'Approved'),
+                  const SizedBox(height: 10),
+                  buildSubmitButton('Submit Not Approved Inspection', Colors.red, 'Not Approved'),
                 ],
               ),
             ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Approved Button
-          ElevatedButton(
-            onPressed: () {
-              if (_mtopIdController.text.length != 6) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('MTOP ID must be exactly 6 characters'),
-                    backgroundColor: Colors.red,
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-              } else if (_applicantNameController.text.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Applicant Name is required'),
-                    backgroundColor: Colors.red,
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-              } else {
-                submitInspection('Approved');
-              }
-            },
-            child: const Text('Submit Approved Inspection'),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Not Approved Button
-          ElevatedButton(
-            onPressed: () {
-              if (_mtopIdController.text.length != 6) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('MTOP ID must be exactly 6 characters'),
-                    backgroundColor: Colors.red,
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-              } else if (_applicantNameController.text.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Applicant Name is required'),
-                    backgroundColor: Colors.red,
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-              } else {
-                submitInspection('Not Approved');
-              }
-            },
-            child: const Text('Submit Not Approved Inspection'),
-          ),
-
-          const SizedBox(height: 20),
-        ],
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget buildDropdown({
+    required String title,
+    required String value,
+    required List<String> items,
+    required void Function(String?) onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        DropdownButton<String>(
+          value: value,
+          items: items.map((item) {
+            return DropdownMenuItem(value: item, child: Text(item));
+          }).toList(),
+          onChanged: onChanged,
+          isExpanded: true,
+        ),
+      ],
+    );
+  }
+
+  Widget buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    List<TextInputFormatter>? inputFormatters,
+    bool enabled = true,
+    Function(String)? onChanged,
+  }) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon),
+        border: OutlineInputBorder(),
+      ),
+      inputFormatters: inputFormatters,
+      enabled: enabled,
+      onChanged: onChanged,
+    );
+  }
+
+  Widget buildChecklistTile(
+    String title,
+    bool value,
+    IconData icon,
+    void Function(bool?) onChanged,
+  ) {
+    return CheckboxListTile(
+      title: Text(title),
+      value: value,
+      onChanged: onChanged,
+      secondary: Icon(icon),
+    );
+  }
+
+  Widget buildSubmitButton(String text, Color color, String status) {
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        foregroundColor: Colors.white, backgroundColor: color,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+      ),
+      onPressed: () {
+        if (_mtopIdController.text.length != 6) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('MTOP ID must be exactly 6 characters'),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        } else if (_applicantNameController.text.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Applicant Name is required'),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        } else {
+          submitInspection(status);
+        }
+      },
+      child: Text(text),
     );
   }
 }

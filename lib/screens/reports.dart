@@ -56,46 +56,80 @@ class _ReportsScreenState extends State<ReportsScreen> {
         padding: const EdgeInsets.all(20.0),
         child: isLoading
             ? Center(child: CircularProgressIndicator())
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildReportCard(
-                    title: 'Total Inspections',
-                    value: totalInspections.toString(),
-                  ),
-                  _buildReportCard(
-                    title: 'Most Common Reasons for Not Approved',
-                    value: mostCommonReasons.isEmpty
-                        ? 'None'
-                        : mostCommonReasons.map((reason) => "${reason['reason']} (${reason['count']})").join(', '),
-                  ),
-                  _buildPieChart(),
-                ],
+            : SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildReportCard(
+                      icon: Icons.list_alt_rounded,
+                      iconColor: Colors.blue,
+                      title: 'Total Inspections',
+                      value: totalInspections.toString(),
+                    ),
+                    _buildReportCard(
+                      icon: Icons.warning_rounded,
+                      iconColor: Colors.redAccent,
+                      title: 'Most Common Reasons for Not Approved',
+                      value: mostCommonReasons.isEmpty
+                          ? 'None'
+                          : mostCommonReasons
+                              .map((reason) => "${reason['reason']} (${reason['count']})")
+                              .join(', '),
+                    ),
+                    _buildPieChart(),
+                  ],
+                ),
               ),
       ),
     );
   }
 
-  Widget _buildReportCard({required String title, required String value}) {
+  Widget _buildReportCard({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String value,
+  }) {
     return Card(
-      elevation: 5,
-      shadowColor: Colors.blueAccent,
+      elevation: 8,
+      shadowColor: Colors.blueAccent.withOpacity(0.3),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15.0)),
+        borderRadius: BorderRadius.circular(15.0),
+      ),
       margin: const EdgeInsets.only(bottom: 20),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: Column(
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              title,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            CircleAvatar(
+              radius: 25,
+              backgroundColor: iconColor.withOpacity(0.2),
+              child: Icon(icon, size: 30, color: iconColor),
             ),
-            const SizedBox(height: 10),
-            Text(
-              value,
-              style: const TextStyle(fontSize: 16, color: Colors.blue),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.blue,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -105,8 +139,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   Widget _buildPieChart() {
     return Card(
-      elevation: 5,
-      shadowColor: Colors.blueAccent,
+      elevation: 8,
+      shadowColor: Colors.blueAccent.withOpacity(0.3),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(15.0)),
       margin: const EdgeInsets.only(bottom: 20),
@@ -127,25 +161,25 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       PieChartData(
                         sections: [
                           PieChartSectionData(
-                            color: Colors.green,
+                            color: Colors.black,
                             value: approvedCount.toDouble(),
                             title: approvedCount.toString(),
                             radius: 50,
-                            titleStyle: TextStyle(
+                            titleStyle: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: Colors.white, // White text on black section
                             ),
                           ),
                           PieChartSectionData(
-                            color: Colors.red,
+                            color: Colors.white,
                             value: notApprovedCount.toDouble(),
                             title: notApprovedCount.toString(),
                             radius: 50,
-                            titleStyle: TextStyle(
+                            titleStyle: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: Colors.black, // Black text on white section
                             ),
                           ),
                         ],
@@ -155,7 +189,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     ),
                   )
                 : Center(
-                    child: Text(
+                    child: const Text(
                       'No data available',
                       style: TextStyle(fontSize: 16, color: Colors.grey),
                     ),
@@ -164,8 +198,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildLegendItem(Colors.green, 'Approved'),
-                _buildLegendItem(Colors.red, 'Not Approved'),
+                _buildLegendItem(Colors.black, 'Approved'),
+                _buildLegendItem(Colors.white, 'Not Approved'),
               ],
             ),
           ],
@@ -183,6 +217,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: color,
+            border: color == Colors.white
+                ? Border.all(color: Colors.black, width: 1) // Add border for white legend
+                : null,
           ),
         ),
         const SizedBox(width: 5),
