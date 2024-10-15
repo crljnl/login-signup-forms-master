@@ -16,6 +16,7 @@ dependencies:
   intl: ^0.18.0
   http: ^0.13.4
   http_parser: ^4.0.2
+  fl_chart: ^0.69.0
 
 
 dev_dependencies:

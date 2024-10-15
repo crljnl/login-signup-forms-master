@@ -120,11 +120,11 @@ class _ScanDocumentScreenState extends State<ScanDocumentScreen> {
       return;
     }
 
-    var response = await http.get(Uri.parse('http://192.168.1.3:3000/inspection/$mtopId'));
+    var response = await http.get(Uri.parse('http://192.168.1.2:3000/inspection/$mtopId'));
 
     if (response.statusCode == 200) {
       // Check if MTOP ID has already been submitted
-      var checkSubmission = await http.get(Uri.parse('http://192.168.1.3:3000/check-submission/$mtopId'));
+      var checkSubmission = await http.get(Uri.parse('http://192.168.1.2:3000/check-submission/$mtopId'));
       if (checkSubmission.statusCode == 200 && checkSubmission.body == 'submitted') {
         _showErrorDialog("Documents for this MTOP ID have already been submitted. Please try another MTOP ID.");
         return;
@@ -177,7 +177,7 @@ class _ScanDocumentScreenState extends State<ScanDocumentScreen> {
       return;
     }
 
-    var request = http.MultipartRequest('POST', Uri.parse('http://192.168.1.3:3000/upload-documents'));
+    var request = http.MultipartRequest('POST', Uri.parse('http://192.168.1.2:3000/upload-documents'));
     String mtopId = _mtopIdController.text.trim();
     request.fields['mtop_id'] = mtopId;
 
