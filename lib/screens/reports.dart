@@ -18,6 +18,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
   int approvedCount = 0;
   int notApprovedCount = 0;
   bool isLoading = true;
+  List<Map<String, dynamic>> inspectionsData = [];
 
   @override
   void initState() {
@@ -27,7 +28,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   Future<void> fetchReportsData() async {
     try {
-      final response = await http.get(Uri.parse('http://192.168.1.2:3000/reports'));
+      final response = await http.get(Uri.parse('http://192.168.0.125:3000/reports'));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -46,6 +47,23 @@ class _ReportsScreenState extends State<ReportsScreen> {
     }
   }
 
+  Future<void> fetchInspectionsData() async {
+    try {
+      final response = await http.get(Uri.parse('http://192.168.0.125:3000/inspections'));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          inspectionsData = List<Map<String, dynamic>>.from(data['inspections']);
+        });
+      } else {
+        print('Failed to load inspections data');
+      }
+    } catch (error) {
+      print('Error fetching inspections data: $error');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -60,11 +78,17 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildReportCard(
-                      icon: Icons.list_alt_rounded,
-                      iconColor: Colors.blue,
-                      title: 'Total Inspections',
-                      value: totalInspections.toString(),
+                    GestureDetector(
+                      onTap: () async {
+                        await fetchInspectionsData();
+                        _showInspectionsDialog();
+                      },
+                      child: _buildReportCard(
+                        icon: Icons.list_alt_rounded,
+                        iconColor: Colors.blue,
+                        title: 'Total Inspections',
+                        value: totalInspections.toString(),
+                      ),
                     ),
                     _buildReportCard(
                       icon: Icons.warning_rounded,
@@ -141,8 +165,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
     return Card(
       elevation: 8,
       shadowColor: Colors.blueAccent.withOpacity(0.3),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15.0)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
       margin: const EdgeInsets.only(bottom: 20),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -168,7 +191,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                             titleStyle: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white, // White text on black section
+                              color: Colors.white,
                             ),
                           ),
                           PieChartSectionData(
@@ -179,7 +202,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                             titleStyle: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black, // Black text on white section
+                              color: Colors.black,
                             ),
                           ),
                         ],
@@ -218,7 +241,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             shape: BoxShape.circle,
             color: color,
             border: color == Colors.white
-                ? Border.all(color: Colors.black, width: 1) // Add border for white legend
+                ? Border.all(color: Colors.black, width: 1)
                 : null,
           ),
         ),
@@ -227,4 +250,45 @@ class _ReportsScreenState extends State<ReportsScreen> {
       ],
     );
   }
+
+void _showInspectionsDialog() {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('Total Inspection List'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView( // This allows the content to scroll vertically
+            child: SingleChildScrollView( // This allows the table to scroll horizontally
+              scrollDirection: Axis.horizontal, // Scroll direction set to horizontal
+              child: DataTable(
+                columns: const [
+                  DataColumn(label: Text('Applicant Name')),
+                  DataColumn(label: Text('Inspection Status')),
+                  DataColumn(label: Text('Reason Not Approved')),
+                ],
+                rows: inspectionsData.map((inspection) {
+                  return DataRow(cells: [
+                    DataCell(Text(inspection['applicant_name'] ?? '')),
+                    DataCell(Text(inspection['inspection_status'] ?? '')),
+                    DataCell(Text(inspection['reason_not_approved'] ?? '')),
+                  ]);
+                }).toList(),
+              ),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('Close'),
+          ),
+        ],
+      );
+    },
+  );
+}
 }
