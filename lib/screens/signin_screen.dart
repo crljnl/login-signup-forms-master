@@ -3,8 +3,8 @@ import 'package:login_signup/widgets/custom_scaffold.dart';
 import 'dashboard.dart';  // Import DashboardScreen
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
 import '../theme/theme.dart';
+import 'config.dart'; // Import the Config class for server IP
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -31,7 +31,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
       try {
         final response = await http.post(
-          Uri.parse('http://192.168.0.125:3000/login'),  // Use the correct server IP and port
+          Uri.parse('http://${Config.serverIp}:3000/login'),  // Use the dynamic server IP
           headers: {
             'Content-Type': 'application/json',
           },

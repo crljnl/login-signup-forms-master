@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:fl_chart/fl_chart.dart';
+import 'config.dart'; //
 
 class ReportsScreen extends StatefulWidget {
   final String inspectorId;
@@ -27,42 +28,44 @@ class _ReportsScreenState extends State<ReportsScreen> {
   }
 
   Future<void> fetchReportsData() async {
-    try {
-      final response = await http.get(Uri.parse('http://192.168.0.125:3000/reports'));
+  try {
+    // Use Config.serverIp for dynamic IP configuration
+    final response = await http.get(Uri.parse('http://${Config.serverIp}:3000/reports'));
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        setState(() {
-          totalInspections = data['totalInspections'];
-          mostCommonReasons = List<Map<String, dynamic>>.from(data['mostCommonReasons']);
-          approvedCount = data['approvedCount'] ?? 0;
-          notApprovedCount = data['notApprovedCount'] ?? 0;
-          isLoading = false;
-        });
-      } else {
-        print('Failed to load report data');
-      }
-    } catch (error) {
-      print('Error fetching report data: $error');
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      setState(() {
+        totalInspections = data['totalInspections'];
+        mostCommonReasons = List<Map<String, dynamic>>.from(data['mostCommonReasons']);
+        approvedCount = data['approvedCount'] ?? 0;
+        notApprovedCount = data['notApprovedCount'] ?? 0;
+        isLoading = false;
+      });
+    } else {
+      print('Failed to load report data');
     }
+  } catch (error) {
+    print('Error fetching report data: $error');
   }
+}
 
-  Future<void> fetchInspectionsData() async {
-    try {
-      final response = await http.get(Uri.parse('http://192.168.0.125:3000/inspections'));
+Future<void> fetchInspectionsData() async {
+  try {
+    // Use Config.serverIp for dynamic IP configuration
+    final response = await http.get(Uri.parse('http://${Config.serverIp}:3000/inspections'));
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        setState(() {
-          inspectionsData = List<Map<String, dynamic>>.from(data['inspections']);
-        });
-      } else {
-        print('Failed to load inspections data');
-      }
-    } catch (error) {
-      print('Error fetching inspections data: $error');
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      setState(() {
+        inspectionsData = List<Map<String, dynamic>>.from(data['inspections']);
+      });
+    } else {
+      print('Failed to load inspections data');
     }
+  } catch (error) {
+    print('Error fetching inspections data: $error');
   }
+}
 
   @override
   Widget build(BuildContext context) {

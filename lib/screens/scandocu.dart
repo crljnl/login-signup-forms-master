@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'config.dart'; // Backend server configuration
 
 class ScanDocumentScreen extends StatefulWidget {
   const ScanDocumentScreen({super.key});
@@ -120,16 +121,14 @@ class _ScanDocumentScreenState extends State<ScanDocumentScreen> {
       return;
     }
 
-    var response = await http.get(Uri.parse('http://192.168.0.125:3000/inspection/$mtopId'));
+    // Use Config.serverIp for dynamic IP configuration
+    var response = await http.get(Uri.parse('http://${Config.serverIp}:3000/check-submission/$mtopId'));
 
     if (response.statusCode == 200) {
-      // Check if MTOP ID has already been submitted
-      var checkSubmission = await http.get(Uri.parse('http://192.168.0.125:3000/check-submission/$mtopId'));
-      if (checkSubmission.statusCode == 200 && checkSubmission.body == 'submitted') {
+      if (response.body == 'submitted') {
         _showErrorDialog("Documents for this MTOP ID have already been submitted. Please try another MTOP ID.");
         return;
       }
-
       setState(() {
         _isMtopValid = true;
         _mtopIdErrorMessage = "Valid MTOP ID";
@@ -177,7 +176,8 @@ class _ScanDocumentScreenState extends State<ScanDocumentScreen> {
       return;
     }
 
-    var request = http.MultipartRequest('POST', Uri.parse('http://192.168.0.125:3000/upload-documents'));
+    // Use Config.serverIp for dynamic IP configuration
+    var request = http.MultipartRequest('POST', Uri.parse('http://${Config.serverIp}:3000/upload-documents'));
     String mtopId = _mtopIdController.text.trim();
     request.fields['mtop_id'] = mtopId;
 
@@ -268,7 +268,6 @@ class _ScanDocumentScreenState extends State<ScanDocumentScreen> {
 
     if (response.statusCode == 200) {
       setState(() {
-        // Automatically check the checkboxes
         isBarangayClearanceChecked = true;
         isPoliceClearanceChecked = true;
         isSSSCertificateChecked = true;
@@ -277,7 +276,6 @@ class _ScanDocumentScreenState extends State<ScanDocumentScreen> {
         isCertificateOfRegistrationChecked = true;
         isDriversLicenseChecked = true;
 
-        // Clear all documents for the next MTOP ID
         barangayClearance = null;
         policeClearance = null;
         sssCertificate = null;
@@ -286,7 +284,6 @@ class _ScanDocumentScreenState extends State<ScanDocumentScreen> {
         certificateOfRegistration = null;
         driversLicense = null;
 
-        // Reset the MTOP ID field and validation
         _mtopIdController.clear();
         _isMtopValid = false;
         _mtopIdErrorMessage = "";
@@ -297,7 +294,7 @@ class _ScanDocumentScreenState extends State<ScanDocumentScreen> {
     }
   }
 
-  // Method to show a success dialog
+  // Dialog methods
   void _showSuccessDialog(String message) {
     showDialog(
       context: context,
@@ -318,7 +315,6 @@ class _ScanDocumentScreenState extends State<ScanDocumentScreen> {
     );
   }
 
-  // Method to show an error dialog
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
@@ -348,16 +344,14 @@ class _ScanDocumentScreenState extends State<ScanDocumentScreen> {
       ),
       body: Column(
         children: [
-          const SizedBox(height: 20), // Top padding
-
-          // MTOP ID input and validation button
+          const SizedBox(height: 20),
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
                 TextField(
                   controller: _mtopIdController,
-                  maxLength: 6, // Limit MTOP ID input to 6 characters
+                  maxLength: 6,
                   decoration: InputDecoration(
                     labelText: "Enter MTOP ID",
                     errorText: _mtopIdErrorMessage.isNotEmpty ? _mtopIdErrorMessage : null,
@@ -371,7 +365,6 @@ class _ScanDocumentScreenState extends State<ScanDocumentScreen> {
               ],
             ),
           ),
-
           if (_isMtopValid)
             Expanded(
               child: Padding(
@@ -511,7 +504,7 @@ class _ScanDocumentScreenState extends State<ScanDocumentScreen> {
               children: [
                 IconButton(
                   icon: const Icon(Icons.camera_alt),
-                  onPressed: onCameraPressed, // Open camera when button is pressed
+                  onPressed: onCameraPressed,
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -538,7 +531,7 @@ class _ScanDocumentScreenState extends State<ScanDocumentScreen> {
             children: [
               IconButton(
                 icon: const Icon(Icons.visibility),
-                onPressed: onView, // View the uploaded image
+                onPressed: onView,
               ),
               Checkbox(
                 value: isChecked,

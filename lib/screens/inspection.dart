@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';
+import 'config.dart'; // Import Config class
 
 class InspectionScreen extends StatefulWidget {
   final String loggedInInspectorId;
@@ -15,8 +16,9 @@ class InspectionScreen extends StatefulWidget {
 class _InspectionScreenState extends State<InspectionScreen> {
   List<String> validInspectorIds = [];
 
-  String selectedVehicleType = 'Motorcycle';
+  String selectedVehicleType = 'Tricycle';
   String selectedRegistrationType = 'New';
+  String selectedTown = 'San Luis';
 
   bool isMtopIdAvailable = true;
   bool isMtopIdValidForRenewal = false;
@@ -39,7 +41,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
 
   Future<void> fetchInspectorIds() async {
     final response = await http.get(
-      Uri.parse('http://192.168.0.125:3000/inspectors'),
+      Uri.parse('http://${Config.serverIp}:3000/inspectors'),
     );
 
     if (response.statusCode == 200) {
@@ -54,7 +56,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
 
   Future<void> checkMtopIdAvailability(String mtopId) async {
     final response = await http.get(
-      Uri.parse('http://192.168.0.125:3000/inspection/$mtopId'),
+      Uri.parse('http://${Config.serverIp}:3000/inspection/$mtopId'),
     );
 
     if (response.statusCode == 200) {
@@ -77,7 +79,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
 
   Future<void> fetchInspectionDetails(String mtopId) async {
     final response = await http.get(
-      Uri.parse('http://192.168.0.125:3000/inspection/$mtopId'),
+      Uri.parse('http://${Config.serverIp}:3000/inspection/$mtopId'),
     );
 
     if (response.statusCode == 200) {
@@ -130,20 +132,12 @@ class _InspectionScreenState extends State<InspectionScreen> {
       return;
     }
 
-    // Initialize a list for storing unchecked reasons
     List<String> reasonsNotApproved = [];
 
-    // For "Approved" submission: Ensure all items are checked
     if (inspectionStatus == 'Approved') {
-      if (!isSideMirrorChecked ||
-          !isSignalLightsChecked ||
-          !isTaillightsChecked ||
-          !isMotorNumberChecked ||
-          !isGarbageCanChecked ||
-          !isChassisNumberChecked ||
-          !isVehicleRegistrationChecked ||
-          !isNotOpenPipeChecked ||
-          !isLightInSidecarChecked) {
+      if (!isSideMirrorChecked || !isSignalLightsChecked || !isTaillightsChecked ||
+          !isMotorNumberChecked || !isGarbageCanChecked || !isChassisNumberChecked ||
+          !isVehicleRegistrationChecked || !isNotOpenPipeChecked || !isLightInSidecarChecked) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('All checklist items must be checked for an Approved submission.'),
@@ -157,7 +151,6 @@ class _InspectionScreenState extends State<InspectionScreen> {
       }
     }
 
-    // For "Not Approved" submission: Collect unchecked items
     if (inspectionStatus == 'Not Approved') {
       if (!isSideMirrorChecked) reasonsNotApproved.add('Side Mirror');
       if (!isSignalLightsChecked) reasonsNotApproved.add('Signal Lights');
@@ -183,7 +176,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.0.125:3000/add-inspection'),
+        Uri.parse('http://${Config.serverIp}:3000/add-inspection'),
         headers: <String, String>{'Content-Type': 'application/json; charset=UTF-8'},
         body: jsonEncode({
           'inspector_id': widget.loggedInInspectorId,
@@ -191,6 +184,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
           'mtop_id': _mtopIdController.text,
           'vehicle_type': selectedVehicleType,
           'registration_type': selectedRegistrationType,
+          'town': selectedTown,
           'side_mirror': isSideMirrorChecked,
           'signal_lights': isSignalLightsChecked,
           'taillights': isTaillightsChecked,
@@ -201,7 +195,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
           'not_open_pipe': isNotOpenPipeChecked,
           'light_in_sidecar': isLightInSidecarChecked,
           'inspection_status': inspectionStatus,
-          'reason_not_approved': reasonsNotApproved.join(', ') // Join unchecked reasons
+          'reason_not_approved': reasonsNotApproved.join(', ')
         }),
       );
 
@@ -214,11 +208,9 @@ class _InspectionScreenState extends State<InspectionScreen> {
           ),
         );
 
-        // Reset form after submission
         setState(() {
           _applicantNameController.clear();
           _mtopIdController.clear();
-          selectedVehicleType = 'Motorcycle';
           selectedRegistrationType = 'New';
           isSideMirrorChecked = false;
           isSignalLightsChecked = false;
@@ -232,9 +224,9 @@ class _InspectionScreenState extends State<InspectionScreen> {
           isMtopIdAvailable = true;
           isMtopIdValidForRenewal = false;
           isMtopIdEditable = true;
+          selectedTown = 'San Luis';
         });
       } else {
-        print('Failed to submit inspection. Status Code: ${response.statusCode}');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to submit inspection. Server error: ${response.statusCode}'),
@@ -244,7 +236,6 @@ class _InspectionScreenState extends State<InspectionScreen> {
         );
       }
     } catch (error) {
-      print('Error submitting inspection: $error');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Error submitting inspection. Please check your connection.'),
@@ -262,29 +253,19 @@ class _InspectionScreenState extends State<InspectionScreen> {
         title: const Text('Vehicle Inspection'),
         backgroundColor: Color.fromARGB(255, 58, 157, 250),
         elevation: 4,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.help_outline, color: Colors.white),
-            onPressed: () {
-              // Add help button functionality if needed
-            },
-          ),
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Header Section
             const SizedBox(height: 10),
             Expanded(
               child: ListView(
                 children: [
-                  // Vehicle type dropdown
-                  buildDropdown(
-                    title: "Select Vehicle Type",
+                  buildEnhancedDropdown(
+                    title: "Vehicle Type",
                     value: selectedVehicleType,
-                    items: const ['Motorcycle', 'Tricycle', 'Etrike'],
+                    items: const ['Tricycle'],
                     onChanged: (value) {
                       setState(() {
                         selectedVehicleType = value!;
@@ -292,8 +273,6 @@ class _InspectionScreenState extends State<InspectionScreen> {
                     },
                   ),
                   const SizedBox(height: 10),
-
-                  // Registration type dropdown
                   buildDropdown(
                     title: "Registration Type",
                     value: selectedRegistrationType,
@@ -305,24 +284,18 @@ class _InspectionScreenState extends State<InspectionScreen> {
                     },
                   ),
                   const SizedBox(height: 20),
-
-                  // Applicant Name
                   buildTextField(
                     controller: _applicantNameController,
                     label: 'Applicant Name',
                     icon: Icons.person,
                   ),
                   const SizedBox(height: 20),
-
-                  // MTOP ID
                   buildTextField(
                     controller: _mtopIdController,
                     label: 'MTOP ID',
                     icon: Icons.directions_car,
                     inputFormatters: [LengthLimitingTextInputFormatter(6)],
-                    enabled: selectedRegistrationType == 'Renewal'
-                        ? isMtopIdEditable
-                        : true,
+                    enabled: selectedRegistrationType == 'Renewal' ? isMtopIdEditable : true,
                     onChanged: (value) {
                       if (selectedRegistrationType == 'New' && value.length == 6) {
                         checkMtopIdAvailability(value);
@@ -332,7 +305,16 @@ class _InspectionScreenState extends State<InspectionScreen> {
                     },
                   ),
                   const SizedBox(height: 20),
-
+                  buildEnhancedDropdown(
+                    title: "Name of the Town",
+                    value: selectedTown,
+                    items: const ['San Luis', 'Lemery', 'Taal', 'Other Town'],
+                    onChanged: (value) {
+                      setState(() {
+                        selectedTown = value!;
+                      });
+                    },
+                  ),
                   // Checklist Items
                   buildChecklistTile('Side Mirror', isSideMirrorChecked, Icons.car_repair, (bool? value) {
                     setState(() {
@@ -381,8 +363,6 @@ class _InspectionScreenState extends State<InspectionScreen> {
                   }),
 
                   const SizedBox(height: 20),
-
-                  // Submit buttons
                   buildSubmitButton('Submit Approved Inspection', Colors.green, 'Approved'),
                   const SizedBox(height: 10),
                   buildSubmitButton('Submit Not Approved Inspection', Colors.red, 'Not Approved'),
@@ -392,6 +372,40 @@ class _InspectionScreenState extends State<InspectionScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget buildEnhancedDropdown({
+    required String title,
+    required String value,
+    required List<String> items,
+    required void Function(String?) onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.grey[200],
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey[400]!),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: DropdownButtonFormField<String>(
+            decoration: const InputDecoration(border: InputBorder.none),
+            value: value,
+            items: items.map((item) {
+              return DropdownMenuItem(value: item, child: Text(item));
+            }).toList(),
+            onChanged: onChanged,
+            isExpanded: true,
+            style: const TextStyle(fontSize: 16, color: Colors.black),
+            dropdownColor: Colors.white,
+            icon: const Icon(Icons.arrow_drop_down, color: Colors.blue),
+          ),
+        ),
+      ],
     );
   }
 
