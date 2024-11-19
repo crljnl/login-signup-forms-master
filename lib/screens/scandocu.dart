@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'package:image/image.dart' as img; // For image compression
 import 'config.dart'; // Backend server configuration
 
 class ScanDocumentScreen extends StatefulWidget {
@@ -29,15 +30,6 @@ class _ScanDocumentScreenState extends State<ScanDocumentScreen> {
   String _mtopIdErrorMessage = "";
   bool isLoading = false; // For general loading state
 
-  // Loading progress variables for each document
-  double barangayClearanceProgress = 0;
-  double policeClearanceProgress = 0;
-  double sssCertificateProgress = 0;
-  double philhealthCertificateProgress = 0;
-  double applicationFeeProgress = 0;
-  double certificateOfRegistrationProgress = 0;
-  double driversLicenseProgress = 0;
-
   // Variables to store the file paths of captured images
   XFile? barangayClearance;
   XFile? policeClearance;
@@ -47,32 +39,59 @@ class _ScanDocumentScreenState extends State<ScanDocumentScreen> {
   XFile? certificateOfRegistration;
   XFile? driversLicense;
 
+  // Loading progress variables for each document
+  double barangayClearanceProgress = 0;
+  double policeClearanceProgress = 0;
+  double sssCertificateProgress = 0;
+  double philhealthCertificateProgress = 0;
+  double applicationFeeProgress = 0;
+  double certificateOfRegistrationProgress = 0;
+  double driversLicenseProgress = 0;
+
+  // Method to compress images before upload
+  Future<File> compressImage(File imageFile) async {
+    final rawImage = img.decodeImage(imageFile.readAsBytesSync());
+    if (rawImage == null) throw Exception("Error reading image");
+
+    // Compress the image (resize to a maximum width/height of 1024px)
+    final compressedImage = img.copyResize(rawImage, width: 1024, height: 1024);
+
+    // Save the compressed image to a temporary file
+    final tempDir = Directory.systemTemp;
+    final tempFile = File('${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}.jpg');
+    tempFile.writeAsBytesSync(img.encodeJpg(compressedImage, quality: 80));
+
+    return tempFile;
+  }
+
   // Method to open the camera for each document
   Future<void> _openCamera(String documentType) async {
     final XFile? image = await _picker.pickImage(source: ImageSource.camera);
     if (image != null) {
+      final compressedFile = await compressImage(File(image.path));
+
       setState(() {
         switch (documentType) {
           case 'barangay_clearance':
-            barangayClearance = image;
+            barangayClearance = XFile(compressedFile.path);
             break;
           case 'police_clearance':
-            policeClearance = image;
+            policeClearance = XFile(compressedFile.path);
             break;
           case 'sss_certificate':
-            sssCertificate = image;
+            sssCertificate = XFile(compressedFile.path);
             break;
           case 'philhealth_certificate':
-            philhealthCertificate = image;
+            philhealthCertificate = XFile(compressedFile.path);
             break;
           case 'application_fee':
-            applicationFee = image;
+            applicationFee = XFile(compressedFile.path);
             break;
           case 'certificate_of_registration':
-            certificateOfRegistration = image;
+            certificateOfRegistration = XFile(compressedFile.path);
             break;
           case 'drivers_license':
-            driversLicense = image;
+            driversLicense = XFile(compressedFile.path);
             break;
         }
       });
@@ -109,11 +128,10 @@ class _ScanDocumentScreenState extends State<ScanDocumentScreen> {
     }
   }
 
-  // Method to check if MTOP ID is valid by querying the backend
+  // Method to validate MTOP ID
   Future<void> _validateMtopId() async {
     String mtopId = _mtopIdController.text.trim();
 
-    // Ensure MTOP ID is 6 characters long
     if (mtopId.length != 6) {
       setState(() {
         _mtopIdErrorMessage = "MTOP ID must be exactly 6 characters.";
@@ -121,17 +139,12 @@ class _ScanDocumentScreenState extends State<ScanDocumentScreen> {
       return;
     }
 
-    // Use Config.serverIp for dynamic IP configuration
     var response = await http.get(Uri.parse('http://${Config.serverIp}:3000/check-submission/$mtopId'));
 
-    if (response.statusCode == 200) {
-      if (response.body == 'submitted') {
-        _showErrorDialog("Documents for this MTOP ID have already been submitted. Please try another MTOP ID.");
-        return;
-      }
+    if (response.statusCode == 200 && response.body == 'not submitted') {
       setState(() {
         _isMtopValid = true;
-        _mtopIdErrorMessage = "Valid MTOP ID";
+        _mtopIdErrorMessage = "";
       });
       _showSuccessDialog("MTOP ID is valid. You can now capture documents.");
     } else {
@@ -139,7 +152,7 @@ class _ScanDocumentScreenState extends State<ScanDocumentScreen> {
         _isMtopValid = false;
         _mtopIdErrorMessage = "Invalid MTOP ID";
       });
-      _showErrorDialog("MTOP ID not found in the database.");
+      _showErrorDialog("MTOP ID not found or already submitted.");
     }
   }
 
@@ -164,7 +177,6 @@ class _ScanDocumentScreenState extends State<ScanDocumentScreen> {
       return;
     }
 
-    // Ensure all documents are uploaded before submitting
     if (barangayClearance == null ||
         policeClearance == null ||
         sssCertificate == null ||
@@ -176,12 +188,11 @@ class _ScanDocumentScreenState extends State<ScanDocumentScreen> {
       return;
     }
 
-    // Use Config.serverIp for dynamic IP configuration
     var request = http.MultipartRequest('POST', Uri.parse('http://${Config.serverIp}:3000/upload-documents'));
     String mtopId = _mtopIdController.text.trim();
     request.fields['mtop_id'] = mtopId;
 
-    // Add all documents to the request if they are available
+    // Add compressed documents to the request
     if (barangayClearance != null) {
       request.files.add(await http.MultipartFile.fromPath(
         'barangay_clearance',
@@ -259,9 +270,7 @@ class _ScanDocumentScreenState extends State<ScanDocumentScreen> {
       driversLicenseProgress = progress;
     });
 
-    // Send the request
     var response = await request.send();
-
     setState(() {
       isLoading = false;
     });
