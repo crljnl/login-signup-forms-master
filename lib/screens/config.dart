@@ -2,5 +2,5 @@
 
 class Config {
   // Set the Neon Tech hostname directly as a constant
-  static const String serverIp = '192.168.5.171';
+  static const String serverIp = '192.168.100.225';
 }

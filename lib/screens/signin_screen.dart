@@ -43,31 +43,89 @@ class _SignInScreenState extends State<SignInScreen> {
           final String name = responseBody['user']['name'];  // Extract the user's name
           final String inspectorId = responseBody['user']['inspector_id'];  // Extract the inspector's ID
 
+          // Show success message at the top with inspector ID
+          _showTopMessage('Welcome, $name! Inspector ID: $inspectorId', Colors.green);
+
           // Navigate to the dashboard with the user's name and inspector ID
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => DashboardScreen(name: name, inspectorId: inspectorId),
-            ),
-          );
+          Future.delayed(const Duration(seconds: 2), () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    DashboardScreen(name: name, inspectorId: inspectorId),
+              ),
+            );
+          });
         } else if (response.statusCode == 401) {
           // Invalid credentials
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Invalid credentials')),
-          );
+          _showTopMessage('Invalid credentials', Colors.red);
         } else {
           // Other server errors
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('An error occurred. Please try again.')),
-          );
+          _showTopMessage('An error occurred. Please try again.', Colors.red);
         }
       } catch (e) {
         // Handle connection errors
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error connecting to the server')),
-        );
+        _showTopMessage('Error connecting to the server', Colors.red);
       }
     }
+  }
+
+  void _showTopMessage(String message, Color backgroundColor) {
+    final overlay = Overlay.of(context);
+    final overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: MediaQuery.of(context).padding.top + 10, // Top with safe area
+        left: 10,
+        right: 10,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Icon(
+                  backgroundColor == Colors.green
+                      ? Icons.check_circle
+                      : Icons.error,
+                  color: Colors.white,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // Show overlay
+    overlay.insert(overlayEntry);
+
+    // Remove overlay after 2 seconds
+    Future.delayed(const Duration(seconds: 2), () {
+      overlayEntry.remove();
+    });
   }
 
   @override
