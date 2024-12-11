@@ -14,15 +14,6 @@ class ScanDocumentScreen extends StatefulWidget {
 }
 
 class _ScanDocumentScreenState extends State<ScanDocumentScreen> {
-  // Checkbox state variables
-  bool isBarangayClearanceChecked = false;
-  bool isPoliceClearanceChecked = false;
-  bool isSSSCertificateChecked = false;
-  bool isPhilhealthCertificateChecked = false;
-  bool isApplicationFeeChecked = false;
-  bool isCertificateOfRegistrationChecked = false;
-  bool isDriversLicenseChecked = false;
-
   final ImagePicker _picker = ImagePicker();
   final TextEditingController _mtopIdController = TextEditingController();
 
@@ -95,36 +86,6 @@ class _ScanDocumentScreenState extends State<ScanDocumentScreen> {
             break;
         }
       });
-    }
-  }
-
-  // Method to view the captured image
-  void _viewImage(XFile? image) {
-    if (image != null) {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return Dialog(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Image.file(
-                  File(image.path),
-                  fit: BoxFit.contain,
-                ),
-                TextButton(
-                  child: const Text('Close'),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ],
-            ),
-          );
-        },
-      );
-    } else {
-      _showErrorDialog("No image available for viewing.");
     }
   }
 
@@ -277,14 +238,6 @@ class _ScanDocumentScreenState extends State<ScanDocumentScreen> {
 
     if (response.statusCode == 200) {
       setState(() {
-        isBarangayClearanceChecked = true;
-        isPoliceClearanceChecked = true;
-        isSSSCertificateChecked = true;
-        isPhilhealthCertificateChecked = true;
-        isApplicationFeeChecked = true;
-        isCertificateOfRegistrationChecked = true;
-        isDriversLicenseChecked = true;
-
         barangayClearance = null;
         policeClearance = null;
         sssCertificate = null;
@@ -364,11 +317,23 @@ class _ScanDocumentScreenState extends State<ScanDocumentScreen> {
                   decoration: InputDecoration(
                     labelText: "Enter MTOP ID",
                     errorText: _mtopIdErrorMessage.isNotEmpty ? _mtopIdErrorMessage : null,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
                   ),
                 ),
+                const SizedBox(height: 10),
                 ElevatedButton(
                   onPressed: _validateMtopId,
-                  child: const Text('Validate MTOP ID'),
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                  ),
+                  child: const Text('Check MTOP Validity'),
                 ),
                 if (_isMtopValid) const Text("MTOP ID is valid", style: TextStyle(color: Colors.green)),
               ],
@@ -380,103 +345,54 @@ class _ScanDocumentScreenState extends State<ScanDocumentScreen> {
                 padding: const EdgeInsets.all(16.0),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.blue.shade100,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.5),
+                        spreadRadius: 5,
+                        blurRadius: 7,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: ListView(
                     children: [
                       buildRequirementItem(
                         title: 'Barangay Clearance',
-                        isChecked: isBarangayClearanceChecked,
-                        progress: barangayClearanceProgress,
                         image: barangayClearance,
-                        onChanged: (bool? value) {
-                          setState(() {
-                            isBarangayClearanceChecked = value ?? false;
-                          });
-                        },
                         onCameraPressed: () => _openCamera('barangay_clearance'),
-                        onView: () => _viewImage(barangayClearance),
                       ),
                       buildRequirementItem(
                         title: 'Police Clearance',
-                        isChecked: isPoliceClearanceChecked,
-                        progress: policeClearanceProgress,
                         image: policeClearance,
-                        onChanged: (bool? value) {
-                          setState(() {
-                            isPoliceClearanceChecked = value ?? false;
-                          });
-                        },
                         onCameraPressed: () => _openCamera('police_clearance'),
-                        onView: () => _viewImage(policeClearance),
                       ),
                       buildRequirementItem(
                         title: 'SSS Certificate',
-                        isChecked: isSSSCertificateChecked,
-                        progress: sssCertificateProgress,
                         image: sssCertificate,
-                        onChanged: (bool? value) {
-                          setState(() {
-                            isSSSCertificateChecked = value ?? false;
-                          });
-                        },
                         onCameraPressed: () => _openCamera('sss_certificate'),
-                        onView: () => _viewImage(sssCertificate),
                       ),
                       buildRequirementItem(
                         title: 'Philhealth Certificate',
-                        isChecked: isPhilhealthCertificateChecked,
-                        progress: philhealthCertificateProgress,
                         image: philhealthCertificate,
-                        onChanged: (bool? value) {
-                          setState(() {
-                            isPhilhealthCertificateChecked = value ?? false;
-                          });
-                        },
                         onCameraPressed: () => _openCamera('philhealth_certificate'),
-                        onView: () => _viewImage(philhealthCertificate),
                       ),
                       buildRequirementItem(
                         title: 'Application Fee',
-                        isChecked: isApplicationFeeChecked,
-                        progress: applicationFeeProgress,
                         image: applicationFee,
-                        onChanged: (bool? value) {
-                          setState(() {
-                            isApplicationFeeChecked = value ?? false;
-                          });
-                        },
                         onCameraPressed: () => _openCamera('application_fee'),
-                        onView: () => _viewImage(applicationFee),
                       ),
                       buildRequirementItem(
                         title: 'Certificate of Registration',
                         subtitle: 'of Motorized Tricycle for Hire',
-                        isChecked: isCertificateOfRegistrationChecked,
-                        progress: certificateOfRegistrationProgress,
                         image: certificateOfRegistration,
-                        onChanged: (bool? value) {
-                          setState(() {
-                            isCertificateOfRegistrationChecked = value ?? false;
-                          });
-                        },
                         onCameraPressed: () => _openCamera('certificate_of_registration'),
-                        onView: () => _viewImage(certificateOfRegistration),
                       ),
                       buildRequirementItem(
                         title: "Driver's License",
-                        isChecked: isDriversLicenseChecked,
-                        progress: driversLicenseProgress,
                         image: driversLicense,
-                        onChanged: (bool? value) {
-                          setState(() {
-                            isDriversLicenseChecked = value ?? false;
-                          });
-                        },
                         onCameraPressed: () => _openCamera('drivers_license'),
-                        onView: () => _viewImage(driversLicense),
                       ),
                     ],
                   ),
@@ -488,7 +404,8 @@ class _ScanDocumentScreenState extends State<ScanDocumentScreen> {
       floatingActionButton: _isMtopValid && !isLoading
           ? FloatingActionButton(
               onPressed: _uploadDocuments,
-              child: const Text('Submit'),
+              backgroundColor: Colors.blue,
+              child: const Icon(Icons.upload),
             )
           : null,
     );
@@ -497,58 +414,34 @@ class _ScanDocumentScreenState extends State<ScanDocumentScreen> {
   Widget buildRequirementItem({
     required String title,
     String? subtitle,
-    required bool isChecked,
-    required double progress,
     required XFile? image,
-    required ValueChanged<bool?> onChanged,
     required VoidCallback onCameraPressed,
-    required VoidCallback onView,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        children: [
-          Expanded(
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.camera_alt),
-                  onPressed: onCameraPressed,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(title),
-                      if (subtitle != null)
-                        Text(
-                          subtitle,
-                          style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
-                        ),
-                      if (progress > 0)
-                        LinearProgressIndicator(
-                          value: progress / 100,
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+      child: Card(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+        ),
+        elevation: 5,
+        child: ListTile(
+          leading: IconButton(
+            icon: const Icon(Icons.camera_alt, color: Colors.blue),
+            onPressed: onCameraPressed,
           ),
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.visibility),
-                onPressed: onView,
-              ),
-              Checkbox(
-                value: isChecked,
-                onChanged: onChanged,
-              ),
-            ],
-          ),
-        ],
+          title: Text(title),
+          subtitle: subtitle != null ? Text(subtitle) : null,
+          trailing: image != null
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.check_circle, color: Colors.green),
+                    const SizedBox(width: 5),
+                    const Text('Captured', style: TextStyle(color: Colors.green)),
+                  ],
+                )
+              : const Text('Pending', style: TextStyle(color: Colors.red)),
+        ),
       ),
     );
   }

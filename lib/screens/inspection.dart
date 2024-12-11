@@ -266,6 +266,12 @@ class _InspectionScreenState extends State<InspectionScreen> {
                 });
               },
             ),
+             const SizedBox(height: 16),
+            // Checklist Title
+            Text(
+              'List of Requirements',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.teal),
+            ),
             const SizedBox(height: 16),
             // Checklist Items
             buildChecklistTile('Side Mirror', isSideMirrorChecked, Icons.car_repair, (value) {
